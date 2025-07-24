@@ -52,19 +52,28 @@ jobs:
             BUMP_TYPE="$BUMP_OVERRIDE"
             echo "Using override: $BUMP_TYPE"
           else
+            # Check if there are any commits since last tag
             COMMITS=$(git log ${{ steps.get_tag.outputs.last_tag }}..HEAD --pretty=format:"%s")
             echo "$COMMITS"
-            BUMP_TYPE=patch
-            if echo "$COMMITS" | grep -iq '\[major\]'; then BUMP_TYPE=major
-            elif echo "$COMMITS" | grep -iq '\[minor\]'; then BUMP_TYPE=minor
+
+            if [ -z "$COMMITS" ]; then
+              echo "No new commits since last tag. Skipping version bump."
+              echo "skip_bump=true" >> "$GITHUB_OUTPUT"
+              BUMP_TYPE=""
+            else
+              BUMP_TYPE=patch
+              if echo "$COMMITS" | grep -iq '\[major\]'; then BUMP_TYPE=major
+              elif echo "$COMMITS" | grep -iq '\[minor\]'; then BUMP_TYPE=minor
+              fi
+              echo "skip_bump=false" >> "$GITHUB_OUTPUT"
             fi
           fi
-
+          
           echo "bump_type=$BUMP_TYPE" >> "$GITHUB_OUTPUT"
 
       - name: Calculate new version
         id: version
-        if: ${{ !inputs.skip-version-bump }}
+        if: ${{ !inputs.skip-version-bump && steps.analyze.outputs.skip_bump != 'true' }}
         run: |
           VERSION="${{ steps.get_tag.outputs.last_tag }}"
           if [ -z "$VERSION" ]; then
@@ -81,7 +90,7 @@ jobs:
           echo "new_tag=$NEW_TAG" >> "$GITHUB_OUTPUT"
 
       - name: Create and push tag
-        if: ${{ !inputs.skip-version-bump }}
+        if: ${{ !inputs.skip-version-bump && steps.analyze.outputs.skip_bump != 'true' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |

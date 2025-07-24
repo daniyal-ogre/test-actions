@@ -1,0 +1,89 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      skip-version-bump:
+        type: boolean
+        default: false
+      bump_override:
+        description: "Override version bump"
+        required: false
+        type: choice
+        options:
+          - ""
+          - major
+          - minor
+          - patch
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        type: environment
+      force-build:
+        description: 'Forces a build step even if the image exists'
+        required: false
+        type: boolean
+        default: false
+      skip-migrations:
+        description: 'Skip running migrations'
+        required: false
+        type: boolean
+        default: false
+      debug:
+        description: 'Enable debug mode'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  ensure_master:
+    name: Ensure Release is from Master
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fail if not on master
+        run: |
+          run: |
+            if [[ "${{ github.ref }}" != "refs/heads/master" ]]; then
+              echo "❌ Releases must be run from the master branch!"
+              exit 1
+            fi
+  bump:
+    name: Bump Version
+    needs: ensure_master
+    uses: ./.github/workflows/bump_release.yml
+    secrets: inherit
+    with:
+      skip-version-bump: ${{ inputs.skip-version-bump }}
+      bump_override: ${{ inputs.bump_override }}
+
+  checkout_tag:
+    name: Checkout bumped tag
+    runs-on: ubuntu-latest
+    needs: bump
+    steps:
+      - name: Checkout the bumped tag
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.bump.outputs.tag }}  # Use correct output key from bump-release workflow
+          fetch-depth: 0
+      
+  output_tag:
+    name: Output current tag
+    needs: checkout_tag
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch tags
+        run: git fetch --tags
+
+      - name: Output current tag
+        run: |
+          TAG=$(git describe --tags --exact-match 2>/dev/null || echo "No tag checked out")
+          echo "Current tag: $TAG"

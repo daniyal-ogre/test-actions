@@ -95,7 +95,7 @@ jobs:
         run: |
           TAG=${{ steps.version.outputs.new_tag || steps.get_tag.outputs.last_tag }}
           if [ -z "$TAG" ]; then
-            echo "Error: TAG is empty. Failing the workflow. If you're skipping version bump, you should have at least one tagged release pre-existing."
+            echo "Error: TAG is empty. Failing the workflows. If you're skipping version bump, you should have at least one tagged release pre-existing."
             exit 1
           fi
           echo "tag=$TAG"

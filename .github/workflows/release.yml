@@ -3,9 +3,6 @@ name: Release
 on:
   workflow_dispatch:
     inputs:
-      skip-version-bump:
-        type: boolean
-        default: false
       bump_override:
         description: "Override version bump"
         required: false
@@ -38,7 +35,6 @@ jobs:
     uses: ./.github/workflows/bump_release.yml
     secrets: inherit
     with:
-      skip-version-bump: ${{ inputs.skip-version-bump }}
       bump_override: ${{ inputs.bump_override }}
 
   checkout_tag:

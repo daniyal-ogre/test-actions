@@ -3,11 +3,6 @@ name: Bump Release
 on:
   workflow_call:
     inputs:
-      skip-version-bump:
-        description: 'Skip version bump'
-        required: false
-        type: boolean
-        default: false
       bump_override:
         description: "Override version bump"
         required: false
@@ -43,7 +38,6 @@ jobs:
 
       - name: Analyze commits
         id: analyze
-        if: ${{ !inputs.skip-version-bump }}
         run: |
           # Check if there are any commits since last tag
           COMMITS=$(git log ${{ steps.get_tag.outputs.last_tag }}..HEAD --pretty=format:"%s")
@@ -76,7 +70,7 @@ jobs:
 
       - name: Calculate new version
         id: version
-        if: ${{ !inputs.skip-version-bump && steps.analyze.outputs.skip_bump != 'true' }}
+        if: ${{ steps.analyze.outputs.skip_bump != 'true' }}
         run: |
           VERSION="${{ steps.get_tag.outputs.last_tag }}"
           if [ -z "$VERSION" ]; then
@@ -93,7 +87,7 @@ jobs:
           echo "new_tag=$NEW_TAG" >> "$GITHUB_OUTPUT"
 
       - name: Create and push tag
-        if: ${{ !inputs.skip-version-bump && steps.analyze.outputs.skip_bump != 'true' }}
+        if: ${{ steps.analyze.outputs.skip_bump != 'true' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |

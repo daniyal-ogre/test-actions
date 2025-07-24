@@ -11,12 +11,8 @@ on:
       bump_override:
         description: "Override version bump"
         required: false
-        type: choice
-        options:
-          - ""
-          - major
-          - minor
-          - patch
+        type: string
+        default: ""
     outputs:
       tag:
         description: "The version tag (new or existing)"

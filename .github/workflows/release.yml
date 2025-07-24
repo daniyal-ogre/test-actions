@@ -15,25 +15,6 @@ on:
           - major
           - minor
           - patch
-      environment:
-        description: 'Environment to deploy to'
-        required: true
-        type: environment
-      force-build:
-        description: 'Forces a build step even if the image exists'
-        required: false
-        type: boolean
-        default: false
-      skip-migrations:
-        description: 'Skip running migrations'
-        required: false
-        type: boolean
-        default: false
-      debug:
-        description: 'Enable debug mode'
-        required: false
-        type: boolean
-        default: false
 
 permissions:
   contents: write
